@@ -1,214 +1,208 @@
 #include <stdio.h>
+#include <string.h>
 
-#define MAX 100
+#define MAX 40
 
 typedef struct {
-    int numero;
-    char nome[100];
-    char cpf[15];
-    char telefone[20];
-    float saldo;
-} Conta;
+    int codigo;
+    char descricao[100];
+    float valor;
+    int estoque;
+} Produto;
 
-int buscar(Conta c[], int total, int numero) {
-    if (total == 0)
-        return -1;
-
-    for (int i = 0; i < total; i++) {
-        if (c[i].numero == numero)
-            return i;
-    }
-
-    return -2;
-}
-
-void cadastrar(Conta c[], int *total, int numero) {
+void cadastrar(Produto p[], int *total) {
     if (*total >= MAX) {
         printf("Cadastro cheio!\n");
         return;
     }
 
-    if (buscar(c, *total, numero) != -2) {
-        printf("Numero de conta ja cadastrado!\n");
-        return;
-    }
+    printf("Codigo: ");
+    scanf("%d", &p[*total].codigo);
 
-    c[*total].numero = numero;
+    printf("Descricao: ");
+    scanf(" %[^\n]", p[*total].descricao);
 
-    printf("Nome: ");
-    scanf(" %[^\n]", c[*total].nome);
+    printf("Valor unitario: ");
+    scanf("%f", &p[*total].valor);
 
-    printf("CPF: ");
-    scanf("%s", c[*total].cpf);
-
-    printf("Telefone: ");
-    scanf("%s", c[*total].telefone);
-
-    printf("Saldo inicial: ");
-    scanf("%f", &c[*total].saldo);
+    printf("Quantidade em estoque: ");
+    scanf("%d", &p[*total].estoque);
 
     (*total)++;
-
-    printf("Conta cadastrada com sucesso!\n");
 }
 
-void consultarSaldo(Conta c[], int total, int numero) {
-    int pos = buscar(c, total, numero);
-
-    if (pos >= 0)
-        printf("Saldo: R$ %.2f\n", c[pos].saldo);
-    else
-        printf("Conta nao cadastrada!\n");
-}
-
-void depositar(Conta c[], int total, int numero) {
-    int pos = buscar(c, total, numero);
-    float valor;
-
-    if (pos == -1 || pos == -2) {
-        printf("Conta nao cadastrada!\n");
-        return;
-    }
-
-    printf("Valor do deposito: ");
-    scanf("%f", &valor);
-
-    if (valor <= 0) {
-        printf("Valor invalido!\n");
-        return;
-    }
-
-    c[pos].saldo += valor;
-
-    printf("Deposito realizado!\n");
-}
-
-void sacar(Conta c[], int total, int numero) {
-    int pos = buscar(c, total, numero);
-    float valor;
-
-    if (pos == -1 || pos == -2) {
-        printf("Conta nao cadastrada!\n");
-        return;
-    }
-
-    printf("Valor do saque: ");
-    scanf("%f", &valor);
-
-    if (valor <= 0) {
-        printf("Valor invalido!\n");
-        return;
-    }
-
-    if (c[pos].saldo >= valor) {
-        c[pos].saldo -= valor;
-        printf("Saque realizado!\n");
-    } else {
-        printf("Saldo insuficiente!\n");
-    }
-}
-
-void exibirContas(Conta c[], int total) {
-    if (total == 0) {
-        printf("Nenhuma conta cadastrada!\n");
-        return;
-    }
-
+int buscar(Produto p[], int total, int codigo) {
     for (int i = 0; i < total; i++) {
-        printf("\nNumero: %d\n", c[i].numero);
-        printf("Nome: %s\n", c[i].nome);
-        printf("Telefone: %s\n", c[i].telefone);
+        if (p[i].codigo == codigo)
+            return i;
+    }
+    return -1;
+}
+
+void alterarValor(Produto p[], int total, int codigo) {
+    int pos = buscar(p, total, codigo);
+
+    if (pos == -1) {
+        printf("Produto nao encontrado!\n");
+        return;
+    }
+
+    printf("Novo valor: ");
+    scanf("%f", &p[pos].valor);
+}
+
+float consultarValor(Produto p[], int total, int codigo) {
+    int pos = buscar(p, total, codigo);
+
+    if (pos == -1)
+        return -1;
+
+    return p[pos].valor;
+}
+
+int consultarEstoque(Produto p[], int total, int codigo) {
+    int pos = buscar(p, total, codigo);
+
+    if (pos == -1)
+        return -1;
+
+    return p[pos].estoque;
+}
+
+void vender(Produto p[], int total, int codigo, int quantidade) {
+    int pos = buscar(p, total, codigo);
+
+    if (pos == -1) {
+        printf("Produto nao encontrado!\n");
+        return;
+    }
+
+    if (p[pos].estoque == 0) {
+        printf("Produto sem estoque!\n");
+        return;
+    }
+
+    if (quantidade <= 0) {
+        printf("Quantidade invalida!\n");
+        return;
+    }
+
+    if (quantidade > p[pos].estoque) {
+        int opcao;
+
+        printf("Quantidade desejada maior que o estoque.\n");
+        printf("Deseja comprar as %d unidades disponiveis? (1-Sim / 0-Nao): ",
+               p[pos].estoque);
+        scanf("%d", &opcao);
+
+        if (opcao == 1) {
+            printf("Valor a pagar: R$ %.2f\n",
+                   p[pos].estoque * p[pos].valor);
+            p[pos].estoque = 0;
+        } else {
+            printf("Venda cancelada!\n");
+        }
+    } else {
+        printf("Valor a pagar: R$ %.2f\n",
+               quantidade * p[pos].valor);
+
+        p[pos].estoque -= quantidade;
+    }
+}
+
+void atualizarEstoque(Produto p[], int total, int codigo) {
+    int pos = buscar(p, total, codigo);
+
+    if (pos == -1) {
+        printf("Produto nao encontrado!\n");
+        return;
+    }
+
+    printf("Nova quantidade em estoque: ");
+    scanf("%d", &p[pos].estoque);
+}
+
+void exibirTodos(Produto p[], int total) {
+    for (int i = 0; i < total; i++) {
+        printf("Codigo: %d | Descricao: %s\n",
+               p[i].codigo, p[i].descricao);
+    }
+}
+
+void exibirSemEstoque(Produto p[], int total) {
+    for (int i = 0; i < total; i++) {
+        if (p[i].estoque == 0) {
+            printf("Codigo: %d | Descricao: %s\n",
+                   p[i].codigo, p[i].descricao);
+        }
     }
 }
 
 int main() {
-    Conta corrente[MAX], poupanca[MAX];
-
-    int totalCorrente = 0;
-    int totalPoupanca = 0;
-
-    int opcao, tipo, numero;
+    Produto produtos[MAX];
+    int total = 0;
+    int opcao, codigo, quantidade;
 
     do {
-        printf("\n--- BANCO DINHEIRO CERTO ---\n");
-        printf("1 - Cadastrar conta\n");
-        printf("2 - Consultar saldo\n");
-        printf("3 - Depositar\n");
-        printf("4 - Sacar\n");
-        printf("5 - Exibir contas\n");
+        printf("\n--- PAPELARIA ESCOLAR ---\n");
+        printf("1 - Cadastrar produto\n");
+        printf("2 - Alterar valor\n");
+        printf("3 - Consultar valor\n");
+        printf("4 - Consultar estoque\n");
+        printf("5 - Vender produto\n");
+        printf("6 - Atualizar estoque\n");
+        printf("7 - Exibir todos os produtos\n");
+        printf("8 - Exibir produtos sem estoque\n");
         printf("0 - Sair\n");
         printf("Opcao: ");
         scanf("%d", &opcao);
 
-        if (opcao >= 1 && opcao <= 5) {
-            printf("\n1 - Conta corrente\n");
-            printf("2 - Conta poupanca\n");
-            printf("Tipo de conta: ");
-            scanf("%d", &tipo);
+        switch (opcao) {
+            case 1:
+                cadastrar(produtos, &total);
+                break;
 
-            if (tipo == 1) {
-                switch (opcao) {
-                    case 1:
-                        printf("Numero da conta: ");
-                        scanf("%d", &numero);
-                        cadastrar(corrente, &totalCorrente, numero);
-                        break;
+            case 2:
+                printf("Codigo: ");
+                scanf("%d", &codigo);
+                alterarValor(produtos, total, codigo);
+                break;
 
-                    case 2:
-                        printf("Numero da conta: ");
-                        scanf("%d", &numero);
-                        consultarSaldo(corrente, totalCorrente, numero);
-                        break;
+            case 3:
+                printf("Codigo: ");
+                scanf("%d", &codigo);
+                printf("Valor: R$ %.2f\n",
+                       consultarValor(produtos, total, codigo));
+                break;
 
-                    case 3:
-                        printf("Numero da conta: ");
-                        scanf("%d", &numero);
-                        depositar(corrente, totalCorrente, numero);
-                        break;
+            case 4:
+                printf("Codigo: ");
+                scanf("%d", &codigo);
+                printf("Estoque: %d\n",
+                       consultarEstoque(produtos, total, codigo));
+                break;
 
-                    case 4:
-                        printf("Numero da conta: ");
-                        scanf("%d", &numero);
-                        sacar(corrente, totalCorrente, numero);
-                        break;
+            case 5:
+                printf("Codigo: ");
+                scanf("%d", &codigo);
+                printf("Quantidade desejada: ");
+                scanf("%d", &quantidade);
+                vender(produtos, total, codigo, quantidade);
+                break;
 
-                    case 5:
-                        exibirContas(corrente, totalCorrente);
-                        break;
-                }
-            } else if (tipo == 2) {
-                switch (opcao) {
-                    case 1:
-                        printf("Numero da conta: ");
-                        scanf("%d", &numero);
-                        cadastrar(poupanca, &totalPoupanca, numero);
-                        break;
+            case 6:
+                printf("Codigo: ");
+                scanf("%d", &codigo);
+                atualizarEstoque(produtos, total, codigo);
+                break;
 
-                    case 2:
-                        printf("Numero da conta: ");
-                        scanf("%d", &numero);
-                        consultarSaldo(poupanca, totalPoupanca, numero);
-                        break;
+            case 7:
+                exibirTodos(produtos, total);
+                break;
 
-                    case 3:
-                        printf("Numero da conta: ");
-                        scanf("%d", &numero);
-                        depositar(poupanca, totalPoupanca, numero);
-                        break;
-
-                    case 4:
-                        printf("Numero da conta: ");
-                        scanf("%d", &numero);
-                        sacar(poupanca, totalPoupanca, numero);
-                        break;
-
-                    case 5:
-                        exibirContas(poupanca, totalPoupanca);
-                        break;
-                }
-            } else {
-                printf("Tipo de conta invalido!\n");
-            }
+            case 8:
+                exibirSemEstoque(produtos, total);
+                break;
         }
 
     } while (opcao != 0);
